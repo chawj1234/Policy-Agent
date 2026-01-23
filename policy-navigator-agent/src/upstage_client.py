@@ -7,24 +7,13 @@ from config import MOCK_MODE, SOLAR_MODEL, UPSTAGE_API_KEY, UPSTAGE_BASE_URL
 DOCUMENT_PARSE_PATH = "/document-digitization"  # TODO: Upstage 문서에 맞춰 수정
 
 
-def _with_version(base_url: str) -> str:
-    base = base_url.rstrip("/")
-    return base if base.endswith("/v1") else f"{base}/v1"
+def _ensure_v1(base_url: str) -> str:
+    trimmed = base_url.rstrip("/")
+    return trimmed if trimmed.endswith("/v1") else f"{trimmed}/v1"
 
 
-def _without_version(base_url: str) -> str:
-    base = base_url.rstrip("/")
-    return base[:-3] if base.endswith("/v1") else base
-
-
-def _strip_solar(base_url: str) -> str:
-    base = base_url.rstrip("/")
-    return base[:-6] if base.endswith("/solar") else base
-
-
-BASE_URL = _without_version(_strip_solar(UPSTAGE_BASE_URL))
-VERSIONED_BASE_URL = _with_version(BASE_URL)
-SOLAR_BASE_URL = f"{VERSIONED_BASE_URL}/solar"
+VERSIONED_BASE_URL = _ensure_v1(UPSTAGE_BASE_URL)
+SOLAR_BASE_URL = VERSIONED_BASE_URL
 
 
 MOCK_SOLAR_RESPONSE = """
@@ -72,7 +61,7 @@ def call_solar(prompt: str) -> str:
         model=SOLAR_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
-        max_tokens=4096,
+        max_tokens=16384,
         stream=False,
     )
     return response.choices[0].message.content

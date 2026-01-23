@@ -1,4 +1,9 @@
 # ==================================================
+# Imports
+# ==================================================
+from typing import Optional
+
+# ==================================================
 # Embedded Sample Policy Text (for demo / fallback)
 # ==================================================
 
@@ -34,12 +39,20 @@ SOLAR_PLANNER_TEMPLATE = """
 - 아래 5개 섹션 헤더를 반드시 모두 포함한다
 - 각 섹션은 구체적이고 명확해야 하며, 추상적인 표현을 피한다
 - 정보가 부족한 경우, 이를 숨기지 말고 [추가 질문]에서 명확히 질문한다
+- [추가 질문]에는 아직 답을 모르는 정보만 포함하고, 이미 제공된 정보는 다시 묻지 않는다
+- 오타/띄어쓰기 오류 없이 작성
+- 정책명/지역명/용어는 원문 그대로 유지
+
 
 사용자 프로필:
 {profile}
 
 정책 문서 내용:
 {policy_text}
+
+{agent_plan}
+
+{answered_fields}
 
 출력 형식 (형식 유지 필수):
 [판단 요약]
@@ -59,11 +72,12 @@ SOLAR_PLANNER_TEMPLATE = """
 """.strip()
 
 
-# ==================================================
-# Prompt Builder
-# ==================================================
-
-def build_solar_prompt(profile: str, policy_text: str) -> str:
+def build_solar_prompt(
+    profile: str,
+    policy_text: str,
+    agent_plan: Optional[str] = None,
+    answered_fields: Optional[str] = None,
+) -> str:
     """
     Build a structured planner prompt for Solar.
     The prompt is designed to force agentic (plan-and-act) behavior,
@@ -73,4 +87,57 @@ def build_solar_prompt(profile: str, policy_text: str) -> str:
     return SOLAR_PLANNER_TEMPLATE.format(
         profile=profile,
         policy_text=policy_text,
+        agent_plan=_format_agent_plan(agent_plan),
+        answered_fields=_format_answered_fields(answered_fields),
     )
+
+
+SOLAR_PLAN_TEMPLATE = """
+역할:
+너는 정책 문서와 사용자 프로필을 분석해 **판단에 필요한 정보**를 구조화한다.
+최종 답변을 만들지 말고, 반드시 JSON만 출력한다.
+
+목표:
+- 확실한 조건과 불확실한 조건을 분리한다
+- 부족한 정보는 질문으로 정리한다
+- 추천 행동 후보를 리스트업한다
+
+사용자 프로필:
+{profile}
+
+정책 문서 내용:
+{policy_text}
+
+출력 형식 (JSON만 출력):
+{{
+  "certain_conditions": ["..."],
+  "uncertain_conditions": ["..."],
+  "questions": [
+    {{"field": "나이", "question": "만 나이가 어떻게 되나요?"}},
+    {{"field": "거주지", "question": "현재 거주 지역이 수도권인가요?"}}
+  ],
+  "action_candidates": ["..."]
+}}
+""".strip()
+
+
+def build_plan_prompt(profile: str, policy_text: str) -> str:
+    """
+    Build a plan prompt for Solar to output JSON-only planning metadata.
+    """
+    return SOLAR_PLAN_TEMPLATE.format(
+        profile=profile,
+        policy_text=policy_text,
+    )
+
+
+def _format_agent_plan(agent_plan: Optional[str]) -> str:
+    if not agent_plan:
+        return ""
+    return f"에이전트 계획 결과:\n{agent_plan}"
+
+
+def _format_answered_fields(answered_fields: Optional[str]) -> str:
+    if not answered_fields:
+        return ""
+    return f"이미 제공된 답변:\n{answered_fields}"
