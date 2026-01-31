@@ -74,4 +74,7 @@ def call_information_extract(text: str, schema: dict) -> dict:
         timeout=120,
     )
     content = response.choices[0].message.content
-    return json.loads(content) if isinstance(content, str) else content
+    try:
+        return json.loads(content) if isinstance(content, str) else content
+    except json.JSONDecodeError:
+        return {}

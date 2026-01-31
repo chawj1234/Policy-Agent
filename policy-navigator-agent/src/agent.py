@@ -42,7 +42,6 @@ IE_SCHEMA = {
         "how_to_apply": {"type": "string", "description": "신청 방법 요약"},
         "notes": {"type": "string", "description": "유의사항"},
     },
-    "required": ["program_name", "target_eligibility", "benefit"],
 }
 
 
@@ -119,7 +118,7 @@ def _extract_profile_facts(profile: str) -> Dict[str, Any]:
     elif facts["location"]:
         facts["is_metropolitan"] = False
 
-    if any(token in normalized for token in ["대학생", "재학", "대학(원)"]):
+    if any(token in normalized for token in ["대학", "재학"]):
         facts["is_student"] = True
 
     return facts
