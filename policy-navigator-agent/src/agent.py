@@ -7,8 +7,8 @@ from prompts import build_solar_prompt, build_plan_prompt
 from upstage_client import call_document_parse, call_information_extract, call_solar
 
 
-# 기본 PDF 경로 (data 폴더 내)
-DEFAULT_PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "sample_policy.pdf")
+# 기본 PDF 경로 (data 폴더 내) — 금융·재정·조세 정책
+DEFAULT_PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "money_policy.pdf")
 MAX_POLICY_TEXT_CHARS = 20000
 
 
@@ -20,19 +20,14 @@ REQUIRED_HEADERS = [
     "[확인 필요 사항]",
 ]
 
+# Upstage IE API: 1레벨 property는 string/number/integer/boolean/array만 허용. object 불가.
 IE_SCHEMA = {
     "type": "object",
     "properties": {
         "program_name": {"type": "string", "description": "정책/프로그램 명칭"},
         "target_eligibility": {"type": "string", "description": "대상 및 자격 요건 요약"},
-        "application_period": {
-            "type": "object",
-            "properties": {
-                "start": {"type": "string", "description": "신청 시작일 (YYYY-MM-DD)"},
-                "end": {"type": "string", "description": "신청 종료일 (YYYY-MM-DD)"},
-            },
-            "description": "신청 기간",
-        },
+        "application_period_start": {"type": "string", "description": "신청 시작일 (YYYY-MM-DD)"},
+        "application_period_end": {"type": "string", "description": "신청 종료일 (YYYY-MM-DD)"},
         "benefit": {"type": "string", "description": "혜택/지원 내용"},
         "required_documents": {
             "type": "array",
@@ -209,11 +204,12 @@ def _plan_phase(profile: str, policy_text: str, ie_extract: Optional[str]) -> Di
     }
 
 
-def _safe_information_extract(policy_text: str) -> Optional[str]:
-    """Information Extraction 결과를 안전하게 반환."""
+def _safe_information_extract(pdf_path: str) -> Optional[str]:
+    """Information Extraction 결과를 안전하게 반환. PDF 파일 경로를 넘긴다."""
     try:
-        result = call_information_extract(text=policy_text, schema=IE_SCHEMA)
-    except Exception:
+        result = call_information_extract(document_path=pdf_path, schema=IE_SCHEMA)
+    except Exception as e:
+        print(f"[WARN] IE 실패: {e}")
         return None
 
     try:
@@ -272,7 +268,7 @@ def run(profile: str, pdf_path: Optional[str] = None) -> str:
     Returns:
         최종 상담 결과 문자열
     """
-    # PDF 경로 설정 (기본값: sample_policy.pdf)
+    # PDF 경로 설정 (기본값: money_policy.pdf)
     actual_pdf_path = pdf_path or DEFAULT_PDF_PATH
     
     if not os.path.exists(actual_pdf_path):
@@ -281,12 +277,21 @@ def run(profile: str, pdf_path: Optional[str] = None) -> str:
     print(f"\n📄 PDF 파싱 중: {actual_pdf_path}")
     parsed_doc = call_document_parse(actual_pdf_path)
     policy_text = _policy_text_from_parsed_doc(parsed_doc)
-    ie_extract = _safe_information_extract(policy_text)
+    print(f"[DEBUG] parse: keys={list(parsed_doc.keys())[:5]}, policy_len={len(policy_text)}")
+    ie_extract = _safe_information_extract(actual_pdf_path)
+    print(f"[DEBUG] IE: has_extract={bool(ie_extract)}, extract_len={len(ie_extract or '')}")
     print("✅ PDF 파싱 완료\n")
 
     # Plan 단계
     print("🔍 정책 분석 중...")
     plan_result = _plan_phase(profile=profile, policy_text=policy_text, ie_extract=ie_extract)
+    c, u, q, a = (
+        plan_result.get("certain_conditions", []),
+        plan_result.get("uncertain_conditions", []),
+        plan_result.get("questions", []),
+        plan_result.get("action_candidates", []),
+    )
+    print(f"[DEBUG] plan: certain={len(c)}, uncertain={len(u)}, questions={len(q)}, candidates={len(a)}")
     print("✅ 분석 완료\n")
 
     answered_fields: Dict[str, str] = {}
@@ -317,10 +322,12 @@ def run(profile: str, pdf_path: Optional[str] = None) -> str:
                 profile = _append_profile_field(profile, field_name, answer)
                 answered_fields[field_name] = answer
             profile = _update_profile_from_message(profile, answer)
+            print(f"[DEBUG] 반영: field={field_name}, answered={list(answered_fields.keys())}")
 
         # 재평가
         print("\n🔄 정보를 반영하여 재분석 중...")
         plan_result = _plan_phase(profile=profile, policy_text=policy_text, ie_extract=ie_extract)
+        print(f"[DEBUG] 재분석: questions={len(plan_result.get('questions', []))}")
         print("✅ 재분석 완료\n")
 
     # Final 단계
@@ -335,6 +342,7 @@ def run(profile: str, pdf_path: Optional[str] = None) -> str:
         ie_extract=ie_extract,
     )
     output = call_solar(prompt)
+    print(f"[DEBUG] final: has_headers={all(h in output for h in REQUIRED_HEADERS)}")
     print("✅ 완료\n")
 
     print("━" * 50)

@@ -1,3 +1,4 @@
+import base64
 import json
 import requests
 from openai import OpenAI
@@ -51,19 +52,41 @@ def call_document_parse(pdf_path: str) -> dict:
     with open(pdf_path, "rb") as file_handle:
         files = {"document": file_handle}
         response = requests.post(url, headers=headers, files=files, data=data, timeout=120)
-    response.raise_for_status()
+    if not response.ok:
+        msg = f"Document Parse API 오류 ({response.status_code}). "
+        if response.status_code == 500:
+            msg += "Upstage 서버 일시 오류입니다. 잠시 후 다시 시도하세요."
+        elif response.status_code == 401:
+            msg += "API 키를 확인하거나 결제/크레딧 상태를 확인하세요."
+        else:
+            msg += response.text[:200] if response.text else ""
+        raise RuntimeError(msg)
     return response.json()
 
 
-def call_information_extract(text: str, schema: dict) -> dict:
-    """Information Extraction(Universal Extraction) API 호출."""
+def call_information_extract(document_path: str, schema: dict) -> dict:
+    """Information Extraction API 호출. 문서(PDF/이미지)를 base64로 전달."""
+    with open(document_path, "rb") as f:
+        raw = f.read()
+    b64 = base64.standard_b64encode(raw).decode("ascii")
+    # Upstage IE API는 문서를 image_url 형태의 base64로 받음 (PDF는 application/pdf)
+    mime = "application/pdf" if document_path.lower().endswith(".pdf") else "image/png"
+    data_url = f"data:{mime};base64,{b64}"
+
     client = OpenAI(
         api_key=UPSTAGE_API_KEY,
         base_url=f"{VERSIONED_BASE_URL}{INFORMATION_EXTRACT_PATH}",
     )
     response = client.chat.completions.create(
         model="information-extract",
-        messages=[{"role": "user", "content": text}],
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ],
         response_format={
             "type": "json_schema",
             "json_schema": {

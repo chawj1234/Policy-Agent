@@ -15,6 +15,8 @@
 
 Agent는 **판단(조건 검증) → 계획(선택지 구성) → 대화(피드백 루프) → 실행(행동 가이드)** 흐름을 통해 실제 신청 가능성 중심의 맞춤형 가이드를 제공합니다.
 
+> 프로토타입에서는 **한 번의 피드백 루프**(질문 → 답변 → 재분석 → 최종)로 대화합니다. 에이전트가 부족한 정보를 질문하고, 사용자 답변을 반영해 재분석한 뒤 최종 안내를 냅니다.
+
 ## Agent 흐름 다이어그램
 
 ```
@@ -70,8 +72,17 @@ cp .env.example .env
 ```
 UPSTAGE_API_KEY=up_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 UPSTAGE_BASE_URL=https://api.upstage.ai
-SOLAR_MODEL=solar-pro2
+SOLAR_MODEL=solar-pro3
 ```
+
+#### 모델 선택 가이드
+
+| 모델 | 파라미터 | Context | 특징 | 비고 |
+|------|----------|---------|------|------|
+| `solar-pro2` | 31B | 32K | Chat/Reasoning 모드, CoT 추론 | - |
+| `solar-pro3` | 102B total / 12B active (MoE) | 128K | MoE 아키텍처, 추론 +30% | **Free access (~26.03.02)** |
+
+> Solar Pro 3는 Pro 2와 동일한 API를 유지하여 모델명 변경만으로 적용 가능합니다.
 
 ### 3. 실행
 
@@ -79,25 +90,31 @@ SOLAR_MODEL=solar-pro2
 python src/main.py --profile "29세/수도권/중소기업/월250/미혼"
 ```
 
-> 기본적으로 `data/sample_policy.pdf`를 Document Parse API로 파싱하여 사용합니다.
+> **기본**으로 `data/money_policy.pdf`(금융·재정·조세 정책)를 사용합니다. 다른 정책 문서를 쓰려면 `--pdf`로 경로를 지정하면 됩니다.
 
 ## 데모 정책 문서
 
-| 항목 | 내용 |
+| 파일 | 설명 |
 |------|------|
-| **파일** | `data/sample_policy.pdf` |
-| **출처** | 기획재정부 「2026년부터 이렇게 달라집니다」 (2025.12.29 배포) |
-| **발췌 범위** | 02장 교육·보육·가족 (p.60~) ~ 03장 보건·복지·고용 (~p.129) |
-| **페이지** | 약 70페이지 |
-| **포함 정책** | ICL 학자금대출 확대, 국민연금 크레딧 확대, 위기아동청년법, 먹거리 기본보장 등 |
+| **data/money_policy.pdf** | **기본.** 금융·재정·조세 정책 문서 |
+| **data/transportation_policy.pdf** | **다른 정책.** 국토·교통 정책 문서 (`--pdf data/transportation_policy.pdf`로 선택) |
 
-> 실제 정부 정책 문서에서 청년·복지 관련 카테고리를 발췌하여 데모용으로 구성했습니다.
+- **기본**: `--pdf`를 생략하면 `data/money_policy.pdf`가 사용됩니다.
+- **다른 정책으로 데모**: `--pdf data/transportation_policy.pdf` 처럼 경로를 지정하면 해당 문서로 상담합니다.
+
+```bash
+# 기본 (금융·재정·조세)
+python src/main.py --profile "29세/수도권/중소기업/월250/미혼"
+
+# 국토·교통 정책으로 실행
+python src/main.py --profile "35세/수도권/직장인/월400/기혼" --pdf data/transportation_policy.pdf
+```
 
 ## 데모 시나리오
 
-- **입력 프로필**: "29세/수도권/중소기업/월250/미혼"
-- **정책 문서**: 위 발췌 문서 (`data/sample_policy.pdf`)
-- **출력**: 기준 중위소득 인상 혜택, 위기청년 자립지원, 청년 주거·취업 지원 등 맞춤형 가이드
+- **입력 프로필**: "29세/수도권/중소기업/월250/미혼" (예시)
+- **정책 문서**: 기본 `data/money_policy.pdf` 또는 `--pdf`로 `data/transportation_policy.pdf` 선택
+- **출력**: 선택한 정책 문서에 맞는 자격 판단, 신청 가능 정책, 예상 혜택, 다음 단계, 확인 필요 사항
 
 ## 출력 예시
 
@@ -144,7 +161,11 @@ policy-navigator-agent/
 │   ├── upstage_client.py # Upstage API 클라이언트 (Solar, Parse, IE)
 │   └── config.py         # 환경 설정
 ├── data/
-│   └── sample_policy.pdf # 정책 문서 (Document Parse로 파싱)
+│   ├── money_policy.pdf         # 기본: 금융·재정·조세 정책
+│   └── transportation_policy.pdf # 다른 정책: 국토·교통
+├── docs/
+│   ├── agent.py_함수정리.md     # agent.py 함수·역할 참고
+│   └── 검수결과.md              # 프로젝트 전체 검수 요약
 ├── requirements.txt
 ├── .env.example
 ├── DEMO.md
