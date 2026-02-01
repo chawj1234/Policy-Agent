@@ -90,16 +90,16 @@ SOLAR_MODEL=solar-pro3
 python src/main.py --profile "29세/수도권/중소기업/월250/미혼"
 ```
 
-> **기본**으로 `data/money_policy.pdf`(금융·재정·조세 정책)를 사용합니다. 다른 정책 문서를 쓰려면 `--pdf`로 경로를 지정하면 됩니다.
+> **기본**으로 `data/finance_policy.pdf`(금융·재정·조세 정책)를 사용합니다. 다른 정책 문서를 쓰려면 `--pdf`로 경로를 지정하면 됩니다.
 
 ## 데모 정책 문서
 
 | 파일 | 설명 |
 |------|------|
-| **data/money_policy.pdf** | **기본.** 금융·재정·조세 정책 문서 |
+| **data/finance_policy.pdf** | **기본.** 금융·재정·조세 정책 문서 |
 | **data/transportation_policy.pdf** | **다른 정책.** 국토·교통 정책 문서 (`--pdf data/transportation_policy.pdf`로 선택) |
 
-- **기본**: `--pdf`를 생략하면 `data/money_policy.pdf`가 사용됩니다.
+- **기본**: `--pdf`를 생략하면 `data/finance_policy.pdf`가 사용됩니다.
 - **다른 정책으로 데모**: `--pdf data/transportation_policy.pdf` 처럼 경로를 지정하면 해당 문서로 상담합니다.
 
 ```bash
@@ -113,7 +113,7 @@ python src/main.py --profile "35세/수도권/직장인/월400/기혼" --pdf dat
 ## 데모 시나리오
 
 - **입력 프로필**: "29세/수도권/중소기업/월250/미혼" (예시)
-- **정책 문서**: 기본 `data/money_policy.pdf` 또는 `--pdf`로 `data/transportation_policy.pdf` 선택
+- **정책 문서**: 기본 `data/finance_policy.pdf` 또는 `--pdf`로 `data/transportation_policy.pdf` 선택
 - **출력**: 선택한 정책 문서에 맞는 자격 판단, 신청 가능 정책, 예상 혜택, 다음 단계, 확인 필요 사항
 
 ## 출력 예시
@@ -161,7 +161,7 @@ policy-navigator-agent/
 │   ├── upstage_client.py # Upstage API 클라이언트 (Solar, Parse, IE)
 │   └── config.py         # 환경 설정
 ├── data/
-│   ├── money_policy.pdf         # 기본: 금융·재정·조세 정책
+│   ├── finance_policy.pdf         # 기본: 금융·재정·조세 정책
 │   └── transportation_policy.pdf # 다른 정책: 국토·교통
 ├── docs/
 │   ├── agent.py_함수정리.md     # agent.py 함수·역할 참고

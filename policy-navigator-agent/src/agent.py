@@ -8,7 +8,7 @@ from upstage_client import call_document_parse, call_information_extract, call_s
 
 
 # 기본 PDF 경로 (data 폴더 내) — 금융·재정·조세 정책
-DEFAULT_PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "money_policy.pdf")
+DEFAULT_PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "finance_policy.pdf")
 MAX_POLICY_TEXT_CHARS = 20000
 
 
@@ -268,7 +268,7 @@ def run(profile: str, pdf_path: Optional[str] = None) -> str:
     Returns:
         최종 상담 결과 문자열
     """
-    # PDF 경로 설정 (기본값: money_policy.pdf)
+    # PDF 경로 설정 (기본값: finance_policy.pdf)
     actual_pdf_path = pdf_path or DEFAULT_PDF_PATH
     
     if not os.path.exists(actual_pdf_path):

@@ -75,14 +75,14 @@ SOLAR_MODEL=solar-pro3
 
 ### Step 5. 데모 실행
 ```bash
-# 기본: 금융·재정·조세 정책 (data/money_policy.pdf)
+# 기본: 금융·재정·조세 정책 (data/finance_policy.pdf)
 python src/main.py --profile "29세/수도권/중소기업/월250/미혼"
 
 # 다른 정책(국토·교통)으로 데모
 python src/main.py --profile "29세/수도권/중소기업/월250/미혼" --pdf data/transportation_policy.pdf
 ```
 
-> **기본**은 금융·재정·조세 정책(`money_policy.pdf`)입니다. 국토·교통 정책으로 데모하려면 `--pdf data/transportation_policy.pdf`를 붙여 실행하세요.
+> **기본**은 금융·재정·조세 정책(`finance_policy.pdf`)입니다. 국토·교통 정책으로 데모하려면 `--pdf data/transportation_policy.pdf`를 붙여 실행하세요.
 
 ---
 
@@ -163,7 +163,7 @@ python src/main.py --profile "32세/수도권/대기업/월400/기혼/자녀1" -
 실행하면 이런 화면이 나옵니다:
 
 ```
-📄 PDF 파싱 중: data/money_policy.pdf
+📄 PDF 파싱 중: data/finance_policy.pdf
 ✅ PDF 파싱 완료
 
 🔍 정책 분석 중...
@@ -209,7 +209,7 @@ python src/main.py --profile "32세/수도권/대기업/월400/기혼/자녀1" -
 
 | 파일 | 설명 |
 |------|------|
-| **data/money_policy.pdf** | **기본.** 금융·재정·조세 정책 문서. `--pdf` 생략 시 사용됩니다. |
+| **data/finance_policy.pdf** | **기본.** 금융·재정·조세 정책 문서. `--pdf` 생략 시 사용됩니다. |
 | **data/transportation_policy.pdf** | **다른 정책.** 국토·교통 정책 문서. `--pdf data/transportation_policy.pdf`로 선택합니다. |
 
 > 기본은 금융·재정·조세 정책입니다. 국토·교통 정책으로 데모하려면 `--pdf data/transportation_policy.pdf`를 붙여 실행하세요.
@@ -226,9 +226,9 @@ ValueError: UPSTAGE_API_KEY 환경변수가 필요합니다.
 
 ### PDF 파일 없음
 ```
-FileNotFoundError: data/money_policy.pdf
+FileNotFoundError: data/finance_policy.pdf
 ```
-→ `data/` 폴더에 `money_policy.pdf`(기본) 또는 사용 중인 `--pdf` 경로의 파일이 있는지 확인
+→ `data/` 폴더에 `finance_policy.pdf`(기본) 또는 사용 중인 `--pdf` 경로의 파일이 있는지 확인
 
 ### 가상환경 미활성화
 ```
@@ -257,7 +257,7 @@ Usage: main.py [OPTIONS]
 
 Options:
   --profile TEXT  사용자 프로필 문자열  [required]
-  --pdf TEXT      정책 PDF 경로 (기본: data/money_policy.pdf. 예: data/transportation_policy.pdf)
+  --pdf TEXT      정책 PDF 경로 (기본: data/finance_policy.pdf. 예: data/transportation_policy.pdf)
   --help          Show this message and exit.
 ```
 
